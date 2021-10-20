@@ -58,16 +58,19 @@ chroot $chroot_builder_folder ls /var/lib/rpm
 chroot $chroot_builder_folder rm -rf /var/lib/rpm
 chroot $chroot_builder_folder mkdir /var/lib/rpm
 chroot $chroot_builder_folder rpm --initdb
+#chroot $chroot_builder_folder rpmdb -v --rebuilddb --define '_dbpath /var/lib/rpm' --nosignature --nodigest --dbpath=/var/lib/rpm
+
 
 while read -r package || [ -n "$package" ]; do
     full_rpm_path=$(find "$rpm_path" -name "$package" -type f 2>>"$chroot_log")
     package_rpm_name=$(basename $full_rpm_path)
     cp $full_rpm_path $chroot_builder_folder/$package_rpm_name
     #chroot $chroot_builder_folder ls
-    #chroot $chroot_builder_folder rpm -i -v --nodeps --noscripts --notriggers --excludepath / $package_rpm_name
-    chroot $chroot_builder_folder rpm -i -v --replacefiles --nodeps --noscripts --notriggers --excludepath / $package_rpm_name
+    chroot $chroot_builder_folder rpm -ihv --replacepkgs --replacefiles --nodeps --noscripts --notriggers --excludepath / $package_rpm_name
+    #chroot $chroot_builder_folder rpm -i -v --replacefiles --nodeps / $package_rpm_name
     chroot $chroot_builder_folder rm $package_rpm_name
 done < "$packages"
+
 
 HOME=$ORIGINAL_HOME
 
