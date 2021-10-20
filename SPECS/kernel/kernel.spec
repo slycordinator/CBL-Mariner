@@ -4,7 +4,7 @@
 Summary:        Linux Kernel
 Name:           kernel
 Version:        5.10.74.1
-Release:        1%{?dist}
+Release:        100%{?dist}
 License:        GPLv2
 Vendor:         Microsoft Corporation
 Distribution:   Mariner
@@ -219,6 +219,7 @@ Patch1181:      CVE-2021-42252.nopatch
 BuildRequires:  audit-devel
 BuildRequires:  bash
 BuildRequires:  bc
+BuildRequires:  dwarves
 BuildRequires:  diffutils
 BuildRequires:  glib-devel
 BuildRequires:  kbd
