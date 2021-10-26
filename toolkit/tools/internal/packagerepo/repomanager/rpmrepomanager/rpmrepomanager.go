@@ -43,13 +43,6 @@ func CreateRepo(repoDir string) (err error) {
 		logger.Log.Warn(stderr)
 	}
 
-	stdout, stderr, err := shell.Execute("ls", repoDir)
-	if err != nil {
-		logger.Log.Warn(stderr)
-	}
-	
-	logger.Log.Debugf(stdout)
-
 	return
 }
 

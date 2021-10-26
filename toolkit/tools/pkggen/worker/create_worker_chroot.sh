@@ -54,23 +54,25 @@ while read -r package || [ -n "$package" ]; do
     install_one_toolchain_rpm "$package"
 done < "$packages"
 
-chroot $chroot_builder_folder ls /var/lib/rpm
-chroot $chroot_builder_folder rm -rf /var/lib/rpm
-chroot $chroot_builder_folder mkdir /var/lib/rpm
-chroot $chroot_builder_folder rpm --initdb
-#chroot $chroot_builder_folder rpmdb -v --rebuilddb --define '_dbpath /var/lib/rpm' --nosignature --nodigest --dbpath=/var/lib/rpm
+TEMP_DB_PATH=/temp_db
+echo "Setting up a clean RPM database before the Berkeley DB -> SQLite conversion under '$TEMP_DB_PATH'."  | tee -a "$chroot_log"
+chroot "$chroot_builder_folder" mkdir -p "$TEMP_DB_PATH"
+chroot "$chroot_builder_folder" rpm --initdb --dbpath="$TEMP_DB_PATH"
 
-
+# Popularing the SQLite database with package info.
 while read -r package || [ -n "$package" ]; do
     full_rpm_path=$(find "$rpm_path" -name "$package" -type f 2>>"$chroot_log")
-    package_rpm_name=$(basename $full_rpm_path)
-    cp $full_rpm_path $chroot_builder_folder/$package_rpm_name
-    #chroot $chroot_builder_folder ls
-    chroot $chroot_builder_folder rpm -ihv --replacepkgs --replacefiles --nodeps --noscripts --notriggers --excludepath / $package_rpm_name
-    #chroot $chroot_builder_folder rpm -i -v --replacefiles --nodeps / $package_rpm_name
-    chroot $chroot_builder_folder rm $package_rpm_name
+    cp $full_rpm_path $chroot_builder_folder/$package
+
+    echo "Adding RPM DB entry to worker chroot: $package."  | tee -a "$chroot_log"
+
+    chroot "$chroot_builder_folder" rpm -i -v --nodeps --noorder --force --dbpath="$TEMP_DB_PATH" --justdb "$package" &>> "$chroot_log"
+    chroot "$chroot_builder_folder" rm $package
 done < "$packages"
 
+echo "Overwriting old RPM database with the results of the conversion."  | tee -a "$chroot_log"
+chroot "$chroot_builder_folder" rm -rf /var/lib/rpm
+chroot "$chroot_builder_folder" mv "$TEMP_DB_PATH" /var/lib/rpm
 
 HOME=$ORIGINAL_HOME
 
@@ -83,8 +85,6 @@ if [[ -f "$DOCKERCONTAINERONLY" ]]; then
     rm -rf "${chroot_base:?}/$chroot_name"/run
     rm -rf "${chroot_base:?}/$chroot_name"/sys
 fi
-
-
 
 echo "Done installing all packages, creating $chroot_archive." | tee -a "$chroot_log"
 if command -v pigz &>/dev/null ; then
