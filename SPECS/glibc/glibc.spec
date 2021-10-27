@@ -2,11 +2,11 @@
 %define glibc_target_cpu %{_build}
 %define debug_package %{nil}
 # Don't depend on bash by default
-%define __requires_exclude ^/(bin|usr/bin).*$
+%define __requires_exclude ^/(bin|usr/bin).*/(ba)?sh$
 Summary:        Main C library
 Name:           glibc
 Version:        2.28
-Release:        20%{?dist}
+Release:        21%{?dist}
 License:        LGPLv2+
 Vendor:         Microsoft Corporation
 Distribution:   Mariner
@@ -42,7 +42,7 @@ Patch17:        CVE-2021-35942.patch
 # CVE-2021-33574 is composed of two changes.  The original CVE fix -0001 for GLIBC 2.32 and a backport fix for GLIBC 2.28 -0002
 Patch18:        CVE-2021-33574-0001.patch
 Patch19:        CVE-2021-33574-0002.patch
-# CVE-2021-38604 is as issues introduced with the original CVE-2021-33574 CVE. 
+# CVE-2021-38604 is as issues introduced with the original CVE-2021-33574 CVE.
 Patch20:        CVE-2021-38604.patch
 Requires:       filesystem
 Provides:       rtld(GNU_HASH)
@@ -315,6 +315,9 @@ grep "^FAIL: nptl/tst-eintr1" tests.sum >/dev/null && n=$((n+1)) ||:
 %defattr(-,root,root)
 
 %changelog
+* Tue Oct 26 2021 Mateusz Malisz <mamalisz@microsoft.com> - 2.28-21
+- Filter out /bin/sh alongside bash from the dependencies.
+
 * Mon Sep 06 2021 Jon Slobodzian <joslobo@microsoft.com> - 2.28-20
 - Patch CVE-2021-33574 and nopatch CVE-2021-38604.
 
